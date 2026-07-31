@@ -2,7 +2,7 @@ const express = require("express");
 
 const router = express.Router();
 
-const { addBook,getAllBooks,getBookById,updateBook} = require("../controllers/bookController");
+const { addBook,getAllBooks,getBookById,updateBook,deleteBook} = require("../controllers/bookController");
 
 const protect = require("../middleware/authMiddleware");
 const authorize = require("../middleware/roleMiddleware");
@@ -33,6 +33,13 @@ router.put(
     protect,
     authorize("SUPER_ADMIN", "ADMIN"),
     updateBook
+);
+
+router.delete(
+    "/:id",
+    protect,
+    authorize("SUPER_ADMIN", "ADMIN"),
+    deleteBook
 );
 
 module.exports = router;
