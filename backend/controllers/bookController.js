@@ -108,8 +108,52 @@ const getBookById = async (req, res) => {
     }
 };
 
+const updateBook = async (req, res) => {
+    try {
+
+        const { id } = req.params;
+
+         if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid Book ID"
+            });
+        }
+
+
+        const updatedBook = await Book.findByIdAndUpdate(
+            id,
+            req.body,
+            {
+                new: true,
+                runValidators: true,
+            }
+        );
+
+        if (!updatedBook) {
+            return res.status(404).json({
+                message: "Book not found."
+            });
+        }
+
+        res.status(200).json({
+            message: "Book updated successfully.",
+            updatedBook,
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: error.message,
+        });
+
+    }
+};
+
+
+
 module.exports = {
     addBook,
     getAllBooks,
     getBookById,
+    updateBook,
 };

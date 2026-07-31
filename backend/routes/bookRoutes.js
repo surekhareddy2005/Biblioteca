@@ -2,7 +2,7 @@ const express = require("express");
 
 const router = express.Router();
 
-const { addBook,getAllBooks,getBookById } = require("../controllers/bookController");
+const { addBook,getAllBooks,getBookById,updateBook} = require("../controllers/bookController");
 
 const protect = require("../middleware/authMiddleware");
 const authorize = require("../middleware/roleMiddleware");
@@ -27,5 +27,12 @@ router.get(
     authorize("SUPER_ADMIN", "ADMIN", "STUDENT"),
     getBookById
 ),
+
+router.put(
+    "/:id",
+    protect,
+    authorize("SUPER_ADMIN", "ADMIN"),
+    updateBook
+);
 
 module.exports = router;
