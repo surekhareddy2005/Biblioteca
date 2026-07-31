@@ -64,13 +64,64 @@ const addBook = async (req, res) => {
 const getAllBooks = async (req, res) => {
     try {
 
-        const books = await Book.find().populate(
-            "createdBy",
-            "name email role"
-        );
+        let {
+            search,
+            branch,
+            sort,
+            page = 1,
+            limit = 10,
+        } = req.query;
+
+        // Query Object
+        let query = {};
+
+        // Search by Title, Author or ISBN
+        if (search) {
+            query.$or = [
+                { title: { $regex: search, $options: "i" } },
+                { author: { $regex: search, $options: "i" } },
+                { isbn: { $regex: search, $options: "i" } },
+            ];
+        }
+
+        // Filter by Branch
+        if (branch) {
+            query.branch = branch;
+        }
+
+        // Sort Options
+        let sortOption = {};
+
+        if (sort === "asc") {
+            sortOption.title = 1;
+        } else if (sort === "desc") {
+            sortOption.title = -1;
+        } else if (sort === "newest") {
+            sortOption.createdAt = -1;
+        } else if (sort === "oldest") {
+            sortOption.createdAt = 1;
+        } else {
+            sortOption.createdAt = -1;
+        }
+
+        // Pagination
+        page = Number(page);
+        limit = Number(limit);
+
+        const skip = (page - 1) * limit;
+
+        const books = await Book.find(query)
+            .populate("createdBy", "name email role")
+            .sort(sortOption)
+            .skip(skip)
+            .limit(limit);
+
+        const totalBooks = await Book.countDocuments(query);
 
         res.status(200).json({
-            count: books.length,
+            totalBooks,
+            currentPage: page,
+            totalPages: Math.ceil(totalBooks / limit),
             books,
         });
 
