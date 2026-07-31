@@ -32,12 +32,24 @@ const studentSchema = new mongoose.Schema(
         year: {
             type: Number,
             required: true,
-        },
+            enum: [1, 2, 3, 4],
+          },
 
         branch: {
             type: String,
-            required: true,
-        },
+           required: true,
+            enum: [
+        "CSE",
+        "CSE-AIML",
+        "CSE-DS",
+        "CSE-CS",
+        "IT",
+        "ECE",
+        "EEE",
+        "MECH",
+        "CIVIL"
+             ],
+          },
 
         status: {
             type: String,
