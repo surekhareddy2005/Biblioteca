@@ -3,6 +3,7 @@ const cors=require("cors");
 const authRoutes = require("./routes/authRoutes");
 const bookRoutes = require("./routes/bookRoutes");
 const studentRoutes = require("./routes/studentRoutes");
+const issueRoutes = require("./routes/issueRoutes");
 
 const app=express();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/students", studentRoutes);
+app.use("/api/issues", issueRoutes);
 
 
 module.exports=app;
