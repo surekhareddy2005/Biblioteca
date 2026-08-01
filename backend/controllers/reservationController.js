@@ -1,5 +1,125 @@
+const mongoose = require("mongoose");
 const Reservation = require("../models/Reservation");
 const Student = require("../models/Student");
 const Book = require("../models/Book");
+const Issue = require("../models/Issue");
 
-module.exports = {};
+
+const reserveBook = async (req, res) => {
+    try {
+
+        const { studentId, bookId } = req.body;
+
+        //check for required fields
+        if (!studentId || !bookId) {
+            return res.status(400).json({
+                message: "Student ID and Book ID are required.",
+            });
+        }
+
+
+        //check for correct objectid's -- validate id's
+
+        if (
+            !mongoose.Types.ObjectId.isValid(studentId) ||
+            !mongoose.Types.ObjectId.isValid(bookId)
+        ) {
+            return res.status(400).json({
+                message: "Invalid Student ID or Book ID.",
+            });
+        }
+
+
+
+        // check if student exist or not
+        const student = await Student.findById(studentId);
+
+        if (!student) {
+            return res.status(404).json({
+                message: "Student not found.",
+            });
+        }
+
+
+        //check is student is blocked
+        if (student.status === "BLOCKED") {
+            return res.status(403).json({
+                message: "Blocked students cannot reserve books.",
+            });
+        }
+
+
+        // check if book exist
+        const book = await Book.findById(bookId);
+
+        if (!book) {
+            return res.status(404).json({
+                message: "Book not found.",
+            });
+        }
+
+
+        //check for no available copies
+        if (book.availableCopies > 0) {
+            return res.status(400).json({
+                message: "Book is available. Please issue it instead of reserving.",
+            });
+        }
+
+
+        // check the current student does not reserve the same book
+        const alreadyReserved = await Reservation.findOne({
+            student: studentId,
+            book: bookId,
+            status: {
+                $in: ["PENDING", "NOTIFIED"],
+            },
+        });
+
+        if (alreadyReserved) {
+            return res.status(400).json({
+                message: "Book already reserved.",
+            });
+        }
+
+
+        //check the book is not issued 
+        const alreadyIssued = await Issue.findOne({
+            student: studentId,
+            book: bookId,
+            status: "ISSUED",
+        });
+
+        if (alreadyIssued) {
+            return res.status(400).json({
+                message: "Book is already issued to the student.",
+            });
+        }
+
+
+
+        const reservation = await Reservation.create({
+            student: studentId,
+            book: bookId,
+        });
+
+        res.status(201).json({
+            message: "Book reserved successfully.",
+            reservation,
+        });
+
+
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: error.message,
+        });
+
+    }
+};
+
+
+module.exports = {
+    reserveBook,
+};
