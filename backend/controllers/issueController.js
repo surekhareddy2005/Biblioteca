@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const Issue = require("../models/Issue");
 const Student = require("../models/Student");
 const Book = require("../models/Book");
@@ -219,9 +218,163 @@ const student = await Student.findById(issue.student);
 };
 
 
+const getAllIssues = async (req, res) => {
+    try {
+
+        let {
+            search,
+            status,
+            sort,
+            page = 1,
+            limit = 10,
+        } = req.query;
+
+        page = Number(page);
+        limit = Number(limit);
+
+        let query = {};
+
+        // Filter by Status
+        if (status && status !== "OVERDUE") {
+            query.status = status;
+        }
+
+        // Sort
+        let sortOption = {};
+
+        if (sort === "oldest") {
+            sortOption.createdAt = 1;
+        } else {
+            sortOption.createdAt = -1;
+        }
+
+        const skip = (page - 1) * limit;
+
+        let issues = await Issue.find(query)
+            .populate("student", "name rollNo year branch")
+            .populate("book", "title author")
+            .populate("issuedBy", "name")
+            .populate("returnedBy", "name")
+            .sort(sortOption)
+            .skip(skip)
+            .limit(limit);
+
+        const today = new Date();
+
+        issues = issues.map((issue) => {
+
+            const issueObj = issue.toObject();
+
+            if (
+                issueObj.status === "ISSUED" &&
+                issueObj.dueDate < today
+            ) {
+                issueObj.displayStatus = "OVERDUE";
+            } else {
+                issueObj.displayStatus = issueObj.status;
+            }
+
+            return issueObj;
+        });
+
+        // Search
+        if (search) {
+
+            const value = search.toLowerCase();
+
+            issues = issues.filter((issue) => {
+
+                return (
+                    issue.student.name.toLowerCase().includes(value) ||
+                    issue.student.rollNo.toLowerCase().includes(value) ||
+                    issue.book.title.toLowerCase().includes(value)
+                );
+
+            });
+
+        }
+
+        // Filter Overdue
+        if (status === "OVERDUE") {
+
+            issues = issues.filter(
+                (issue) => issue.displayStatus === "OVERDUE"
+            );
+
+        }
+
+        const totalIssues = issues.length;
+
+        res.status(200).json({
+            totalIssues,
+            currentPage: page,
+            totalPages: Math.ceil(totalIssues / limit),
+            issues,
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: error.message,
+        });
+
+    }
+};
+
+const getIssueById = async (req, res) => {
+    try {
+
+        const { id } = req.params;
+
+        // Validate Issue ID
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid Issue ID.",
+            });
+        }
+
+        // Find Issue
+        const issue = await Issue.findById(id)
+            .populate("student", "name rollNo email year branch block status fine")
+            .populate("book", "title author isbn branch")
+            .populate("issuedBy", "name email role")
+            .populate("returnedBy", "name email role");
+
+        if (!issue) {
+            return res.status(404).json({
+                message: "Issue record not found.",
+            });
+        }
+
+        // Calculate Display Status
+        const issueObj = issue.toObject();
+
+        if (
+            issueObj.status === "ISSUED" &&
+            issueObj.dueDate < new Date()
+        ) {
+            issueObj.displayStatus = "OVERDUE";
+        } else {
+            issueObj.displayStatus = issueObj.status;
+        }
+
+        res.status(200).json(issueObj);
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: error.message,
+        });
+
+    }
+};
+
+
 
 module.exports = {
     issueBook,
     returnBook,
+    getAllIssues,
+    getIssueById,
 
 };

@@ -4,7 +4,7 @@ const router = express.Router();
 
 const protect = require("../middleware/authMiddleware");
 const authorize = require("../middleware/roleMiddleware");
-const {issueBook,returnBook}=require("../controllers/issueController")
+const {issueBook,returnBook,getAllIssues,getIssueById}=require("../controllers/issueController")
 
 router.post(
     "/",
@@ -19,6 +19,21 @@ router.put(
     authorize("SUPER_ADMIN", "ADMIN"),
     returnBook
 );
+
+router.get(
+    "/",
+    protect,
+    authorize("SUPER_ADMIN", "ADMIN"),
+    getAllIssues
+);
+
+router.get(
+    "/:id",
+    protect,
+    authorize("SUPER_ADMIN", "ADMIN"),
+    getIssueById
+);
+
 
 
 module.exports = router;
