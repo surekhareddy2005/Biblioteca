@@ -213,8 +213,46 @@ const getAllReservations = async (req, res) => {
     }
 };
 
+const getReservationById = async (req, res) => {
+    try {
+
+        const { id } = req.params;
+
+        // Validate Reservation ID
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid Reservation ID.",
+            });
+        }
+
+        // Find Reservation
+        const reservation = await Reservation.findById(id)
+            .populate("student", "name rollNo email year branch block status")
+            .populate("book", "title author isbn branch");
+
+        if (!reservation) {
+            return res.status(404).json({
+                message: "Reservation not found.",
+            });
+        }
+
+        res.status(200).json({
+            reservation,
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: error.message,
+        });
+
+    }
+};
+
 
 module.exports = {
     reserveBook,
     getAllReservations,
+    getReservationById,
+
 };

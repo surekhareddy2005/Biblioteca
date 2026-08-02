@@ -2,34 +2,42 @@ const express = require("express");
 
 const router = express.Router();
 
+const {
+    createHoliday,
+    getAllHolidays,
+    updateHoliday,
+    deleteHoliday,
+} = require("../controllers/holidayController");
+
 const protect = require("../middleware/authMiddleware");
 const authorize = require("../middleware/roleMiddleware");
-
-
-const {
-    reserveBook,  getAllReservations,getReservationById
-} = require("../controllers/reservationController");
 
 router.post(
     "/",
     protect,
-    authorize("SUPER_ADMIN", "ADMIN"),
-    reserveBook
+    authorize("SUPER_ADMIN"),
+    createHoliday
 );
 
 router.get(
     "/",
     protect,
     authorize("SUPER_ADMIN", "ADMIN"),
-    getAllReservations
+    getAllHolidays
 );
 
-router.get(
+router.put(
     "/:id",
     protect,
-    authorize("SUPER_ADMIN", "ADMIN"),
-    getReservationById
+    authorize("SUPER_ADMIN"),
+    updateHoliday
 );
 
+router.delete(
+    "/:id",
+    protect,
+    authorize("SUPER_ADMIN"),
+    deleteHoliday
+);
 
 module.exports = router;
