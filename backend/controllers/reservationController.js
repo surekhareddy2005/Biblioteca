@@ -250,9 +250,71 @@ const getReservationById = async (req, res) => {
 };
 
 
+const cancelReservation = async (req, res) => {
+    try {
+
+        const { id } = req.params;
+
+        // Validate Reservation ID
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid Reservation ID.",
+            });
+        }
+
+        // Find Reservation
+        const reservation = await Reservation.findById(id);
+
+        if (!reservation) {
+            return res.status(404).json({
+                message: "Reservation not found.",
+            });
+        }
+
+        // Already Cancelled
+        if (reservation.status === "CANCELLED") {
+            return res.status(400).json({
+                message: "Reservation is already cancelled.",
+            });
+        }
+
+        // Already Collected
+        if (reservation.status === "COLLECTED") {
+            return res.status(400).json({
+                message: "Collected reservation cannot be cancelled.",
+            });
+        }
+
+        // Already Expired
+        if (reservation.status === "EXPIRED") {
+            return res.status(400).json({
+                message: "Expired reservation cannot be cancelled.",
+            });
+        }
+
+        // Cancel Reservation
+        reservation.status = "CANCELLED";
+
+        await reservation.save();
+
+        res.status(200).json({
+            message: "Reservation cancelled successfully.",
+            reservation,
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: error.message,
+        });
+
+    }
+};
+
 module.exports = {
     reserveBook,
     getAllReservations,
     getReservationById,
+    cancelReservation,
 
 };

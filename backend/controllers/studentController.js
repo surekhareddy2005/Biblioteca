@@ -252,9 +252,54 @@ const updateStudent = async (req, res) => {
     }
 };
 
+const blockStudent = async (req, res) => {
+    try {
+
+        const { id } = req.params;
+
+        // Validate Student ID
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid Student ID.",
+            });
+        }
+
+        // Find Student
+        const student = await Student.findById(id);
+
+        if (!student) {
+            return res.status(404).json({
+                message: "Student not found.",
+            });
+        }
+
+        // Toggle Status
+        if (student.status === "ACTIVE") {
+            student.status = "BLOCKED";
+        } else {
+            student.status = "ACTIVE";
+        }
+
+        await student.save();
+
+        res.status(200).json({
+            message: `Student ${student.status.toLowerCase()} successfully.`,
+            student,
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: error.message,
+        });
+
+    }
+};
+
 module.exports = {
     createStudent,
     getAllStudents,
     getStudentById,
     updateStudent,
+    blockStudent
 };

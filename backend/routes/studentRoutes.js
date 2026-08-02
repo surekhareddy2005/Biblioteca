@@ -6,7 +6,7 @@ require("../controllers/studentController");
 
 const protect = require("../middleware/authMiddleware");
 const authorize = require("../middleware/roleMiddleware");
-const {createStudent,getAllStudents,getStudentById,updateStudent,} =require("../controllers/studentController")
+const {createStudent,getAllStudents,getStudentById,updateStudent,blockStudent} =require("../controllers/studentController")
 
 
 router.post(
@@ -35,6 +35,12 @@ router.put(
     protect,
     authorize("SUPER_ADMIN", "ADMIN"),
     updateStudent
+);
+router.put(
+    "/block/:id",
+    protect,
+    authorize("SUPER_ADMIN", "ADMIN"),
+    blockStudent
 );
 
 module.exports = router;
