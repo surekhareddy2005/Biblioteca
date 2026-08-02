@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const Issue = require("../models/Issue");
 const Student = require("../models/Student");
 const Book = require("../models/Book");
+const Reservation = require("../models/Reservation");
+const calculateExpiryDate = require("../utils/calculateExpiryDate");
 
 const issueBook = async (req, res) => {
     try {
@@ -200,12 +202,35 @@ const student = await Student.findById(issue.student);
         // Increase Available Copies
         book.availableCopies++;
 
+        // Check Reservation Queue
+const reservation = await Reservation.findOne({
+    book: book._id,
+    status: "PENDING",
+})
+.populate("student", "name email")
+.sort({
+    reservationDate: 1,
+});
+
+if (reservation) {
+
+    const expiryDate = await calculateExpiryDate(returnDate);
+
+    reservation.status = "NOTIFIED";
+    reservation.notificationDate = returnDate;
+    reservation.expiryDate = expiryDate;
+
+    await reservation.save();
+
+}
+
         await book.save();
 
         res.status(200).json({
             message: "Book returned successfully.",
             fine,
             issue,
+            reservation,
         });
 
     } catch (error) {
