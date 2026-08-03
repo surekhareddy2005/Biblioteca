@@ -209,6 +209,7 @@ const returnBook = async (req, res) => {
             status: "PENDING",
         })
             .populate("student", "name email")
+            .populate("book", "title")
             .sort({
                 reservationDate: 1,
             });
@@ -223,20 +224,26 @@ const returnBook = async (req, res) => {
 
             await reservation.save();
 
-            await sendEmail(
-                reservation.student.email,
-                "Book Available for Collection",
-                `Hello ${reservation.student.name},
+               const formattedExpiry = reservation.expiryDate.toLocaleString("en-IN", {
+                          dateStyle: "medium",
+                        timeStyle: "short",
+                         });
+            
+                        // Send Email
+              await sendEmail(
+    reservation.student.email,
+    "Book Available for Collection",
+    `Hello ${reservation.student.name},
 
-                Your reserved book "${book.title}" is now available.
+Your reserved book "${reservation.book.title}" is now available.
 
-                Please collect it before:
+Please collect it before:
 
-$               {reservation.expiryDate}
+${formattedExpiry}
 
-                Thank you,
-                Library Team`
-            );
+Thank you,
+Library Team`
+);
 
         }
 
