@@ -4,6 +4,7 @@ const Student = require("../models/Student");
 const Book = require("../models/Book");
 const Reservation = require("../models/Reservation");
 const calculateExpiryDate = require("../utils/calculateExpiryDate");
+const sendEmail = require("../utils/sendEmail");
 
 const issueBook = async (req, res) => {
     try {
@@ -13,108 +14,108 @@ const issueBook = async (req, res) => {
         const { studentId, bookId } = req.body;
 
         if (!studentId || !bookId) {
-    return res.status(400).json({
-        message: "Student ID and Book ID are required.",
-    });
-}  
+            return res.status(400).json({
+                message: "Student ID and Book ID are required.",
+            });
+        }
 
 
-     // check that both the id's are in the format
-     if (
-    !mongoose.Types.ObjectId.isValid(studentId) ||
-    !mongoose.Types.ObjectId.isValid(bookId)
-    ) {
-    return res.status(400).json({
-        message: "Invalid Student ID or Book ID.",
-    });
-    }
+        // check that both the id's are in the format
+        if (
+            !mongoose.Types.ObjectId.isValid(studentId) ||
+            !mongoose.Types.ObjectId.isValid(bookId)
+        ) {
+            return res.status(400).json({
+                message: "Invalid Student ID or Book ID.",
+            });
+        }
 
 
-    //check if the student is present
-    const student = await Student.findById(studentId);
+        //check if the student is present
+        const student = await Student.findById(studentId);
 
-    if (!student) {
-    return res.status(404).json({
-        message: "Student not found.",
-    });
-     }  
-
-
-     //check if the student is active or not
-     if (student.status === "BLOCKED") {
-    return res.status(403).json({
-        message: "Student account is blocked.",
-    });
-    }
-    
-     const book = await Book.findById(bookId);
+        if (!student) {
+            return res.status(404).json({
+                message: "Student not found.",
+            });
+        }
 
 
-    // check if the book is available
-    if (!book) {
-    return res.status(404).json({
-        message: "Book not found.",
-    });
-    }
+        //check if the student is active or not
+        if (student.status === "BLOCKED") {
+            return res.status(403).json({
+                message: "Student account is blocked.",
+            });
+        }
+
+        const book = await Book.findById(bookId);
 
 
-    //check for availablecopies
-      if (book.availableCopies <= 0) {
-    return res.status(400).json({
-        message: "Book is currently unavailable.",
-    });
-    }    
-
-    //check for duplicatecopies
-    const alreadyIssued = await Issue.findOne({
-    student: studentId,
-    book: bookId,
-    status: "ISSUED",
-    });
-    if (alreadyIssued) {
-    return res.status(400).json({
-        message: "This book is already issued to the student.",
-    });
-    }
+        // check if the book is available
+        if (!book) {
+            return res.status(404).json({
+                message: "Book not found.",
+            });
+        }
 
 
-    // check for issue limit
-      const issuedBooks = await Issue.countDocuments({
-    student: studentId,
-    status: "ISSUED",
-     });
+        //check for availablecopies
+        if (book.availableCopies <= 0) {
+            return res.status(400).json({
+                message: "Book is currently unavailable.",
+            });
+        }
 
-     if (issuedBooks >= 3) {
-    return res.status(400).json({
-        message: "Student has reached the maximum issue limit.",
-    });
-    }
-     
-
-
-     // calculate due date
-     const issueDate = new Date();
-
-    const dueDate = new Date(issueDate);
-    dueDate.setDate(dueDate.getDate()+15);
-
-    const issue = await Issue.create({
-    student: studentId,
-    book: bookId,
-    issueDate,
-    dueDate,
-    issuedBy: req.user.id,
-    });
+        //check for duplicatecopies
+        const alreadyIssued = await Issue.findOne({
+            student: studentId,
+            book: bookId,
+            status: "ISSUED",
+        });
+        if (alreadyIssued) {
+            return res.status(400).json({
+                message: "This book is already issued to the student.",
+            });
+        }
 
 
-   book.availableCopies--;
+        // check for issue limit
+        const issuedBooks = await Issue.countDocuments({
+            student: studentId,
+            status: "ISSUED",
+        });
 
-     await book.save();
+        if (issuedBooks >= 3) {
+            return res.status(400).json({
+                message: "Student has reached the maximum issue limit.",
+            });
+        }
 
-     res.status(201).json({
-    message: "Book issued successfully.",
-    issue,
-     });
+
+
+        // calculate due date
+        const issueDate = new Date();
+
+        const dueDate = new Date(issueDate);
+        dueDate.setDate(dueDate.getDate() + 15);
+
+        const issue = await Issue.create({
+            student: studentId,
+            book: bookId,
+            issueDate,
+            dueDate,
+            issuedBy: req.user.id,
+        });
+
+
+        book.availableCopies--;
+
+        await book.save();
+
+        res.status(201).json({
+            message: "Book issued successfully.",
+            issue,
+        });
 
 
 
@@ -127,7 +128,7 @@ const issueBook = async (req, res) => {
 
     }
 };
-  const returnBook = async (req, res) => {
+const returnBook = async (req, res) => {
     try {
 
         const { id } = req.params;
@@ -170,26 +171,26 @@ const issueBook = async (req, res) => {
         // Fine Calculation
 
         const dueDate = new Date(issue.dueDate);
-       const returnedDate = new Date(returnDate);
+        const returnedDate = new Date(returnDate);
 
-dueDate.setHours(0, 0, 0, 0);
-returnedDate.setHours(0, 0, 0, 0);
+        dueDate.setHours(0, 0, 0, 0);
+        returnedDate.setHours(0, 0, 0, 0);
 
-const oneDay = 1000 * 60 * 60 * 24;
+        const oneDay = 1000 * 60 * 60 * 24;
 
-const lateDays = Math.floor(
-    (returnedDate - dueDate) / oneDay
-);
+        const lateDays = Math.floor(
+            (returnedDate - dueDate) / oneDay
+        );
 
-const fine = lateDays > 0 ? lateDays * 10 : 0;
+        const fine = lateDays > 0 ? lateDays * 10 : 0;
 
 
-const student = await Student.findById(issue.student);
+        const student = await Student.findById(issue.student);
 
-         if (fine > 0) {
-    student.fine += fine;
-    await student.save();
-            }
+        if (fine > 0) {
+            student.fine += fine;
+            await student.save();
+        }
 
         // Update Issue
         issue.returnDate = returnDate;
@@ -203,26 +204,41 @@ const student = await Student.findById(issue.student);
         book.availableCopies++;
 
         // Check Reservation Queue
-const reservation = await Reservation.findOne({
-    book: book._id,
-    status: "PENDING",
-})
-.populate("student", "name email")
-.sort({
-    reservationDate: 1,
-});
+        const reservation = await Reservation.findOne({
+            book: book._id,
+            status: "PENDING",
+        })
+            .populate("student", "name email")
+            .sort({
+                reservationDate: 1,
+            });
 
-if (reservation) {
+        if (reservation) {
 
-    const expiryDate = await calculateExpiryDate(returnDate);
+            const expiryDate = await calculateExpiryDate(returnDate);
 
-    reservation.status = "NOTIFIED";
-    reservation.notificationDate = returnDate;
-    reservation.expiryDate = expiryDate;
+            reservation.status = "NOTIFIED";
+            reservation.notificationDate = returnDate;
+            reservation.expiryDate = expiryDate;
 
-    await reservation.save();
+            await reservation.save();
 
-}
+            await sendEmail(
+                reservation.student.email,
+                "Book Available for Collection",
+                `Hello ${reservation.student.name},
+
+                Your reserved book "${book.title}" is now available.
+
+                Please collect it before:
+
+$               {reservation.expiryDate}
+
+                Thank you,
+                Library Team`
+            );
+
+        }
 
         await book.save();
 
