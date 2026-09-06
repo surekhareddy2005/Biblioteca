@@ -204,6 +204,15 @@ const getAllReservations = async (req, res) => {
     })
 );
 
+        const totalReservations = reservations.length;
+
+        res.status(200).json({
+            totalReservations,
+            currentPage: page,
+            totalPages: Math.ceil(totalReservations / limit),
+            reservations,
+        });
+
     } catch (error) {
 
         res.status(500).json({

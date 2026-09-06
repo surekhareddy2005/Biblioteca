@@ -7,6 +7,7 @@ const issueRoutes = require("./routes/issueRoutes");
 const holidayRoutes = require("./routes/holidayRoutes");
 const reservationRoutes=require("./routes/reservationRoutes");
 const studentAuthRoutes = require("./routes/studentAuthRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 require("./utils/reservationCron");
 const app=express();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 
 
 app.use("/api/auth", authRoutes);
+app.use("/api/admins", adminRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/issues", issueRoutes);

@@ -25,8 +25,13 @@ const adminSchema=new mongoose.Schema({
         type:String,
         default:"",
     },
+    status:{
+        type:String,
+        enum: ["ACTIVE", "BLOCKED"],
+        default: "ACTIVE",
+    },
 },{
-    Timestamps:true,
+    timestamps:true,
 
 });
 module.exports=mongoose.model("Admin",adminSchema);
