@@ -8,17 +8,20 @@ const addBook = async (req, res) => {
             author,
             isbn,
             branch,
+            category,
             description,
             totalCopies,
             availableCopies,
             coverImage,
         } = req.body;
 
+        const effectiveBranch = branch || category;
+
         if (
             !title ||
             !author ||
             !isbn ||
-            !branch ||
+            !effectiveBranch ||
             !totalCopies ||
             availableCopies === undefined
         ) {
@@ -41,7 +44,7 @@ const addBook = async (req, res) => {
             title,
             author,
             isbn,
-            branch,
+            branch: effectiveBranch,
             description,
             totalCopies,
             availableCopies,

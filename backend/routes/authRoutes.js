@@ -24,7 +24,7 @@ router.get("/profile", protect, (req, res) => {
 router.get(
     "/admin-test",
     protect,
-    authorize("SUPER-ADMIN"),
+    authorize("SUPER_ADMIN"),
     (req, res) => {
         res.status(200).json({
             message: "Welcome Super Admin",
